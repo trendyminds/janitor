@@ -4,10 +4,11 @@ namespace Trendyminds\Janitor\Commands;
 
 use App\Tags\Blocks;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\Storage;
-use Spatie\Browsershot\Browsershot;
 use Statamic\Facades\Asset;
 use Statamic\Facades\Fieldset;
+use Trendyminds\Janitor\App\Block;
 
 class Previews extends Command
 {
@@ -18,10 +19,14 @@ class Previews extends Command
     public function handle()
     {
         $this->preflight();
-        $this->getScreenshots();
+        $this->clean();
+        $this->createScreenshots();
         $this->assignImages();
     }
 
+    /**
+     * Checks if the user has everything ready to go for the preview generation
+     */
     private function preflight()
     {
         // Check if storage/app/janitor/puppeteer exists. If not, prompt the user to run the install command.
@@ -32,8 +37,13 @@ class Previews extends Command
         }
     }
 
-    private function getScreenshots()
+    /**
+     * Wipes the existing preview directory and assets in Statamic
+     */
+    private function clean()
     {
+        $this->info('Removing existing block preview images');
+
         // Delete all existing preview images in Statamic
         Asset::query()
             ->where('container', 'uploads')
@@ -44,36 +54,37 @@ class Previews extends Command
         // Delete the existing storage/app/public/set-previews directory and recreate it
         Storage::disk('public')->deleteDirectory('set-previews');
         Storage::disk('public')->makeDirectory('set-previews');
+    }
 
-        // Generate screenshots for each block.
-        $this->info('Generating block previews...');
+    /**
+     * Loop through all of the blocks in chunks and call the screenshot method to create screenshots
+     */
+    private function createScreenshots()
+    {
+        $this->info('Generating block preview images');
 
-        new Blocks()->index()->each(function ($block) {
-            $this->info('✔ '.$block['name']);
+        $blocks = (new Blocks)->index()->chunk(8);
+        $total = $blocks->count();
 
-            $browsershot = Browsershot::url(config('app.url').'/dev/blocks?block='.$block['handle'].'&per_page=1')
-                ->setNodeModulePath(storage_path('app/janitor/puppeteer/node_modules'))
-                ->windowSize(1440, 900);
+        $blocks->each(function ($chunk, $i) use ($total) {
+            $count = $i + 1;
 
-            // Check if the block exists on the page before trying to take a screenshot.
-            $exists = $browsershot->evaluate("document.querySelector('main section') !== null");
+            $tasks = $chunk->map(function ($block) {
+                return fn () => Block::screenshot($block['handle']);
+            })->all();
 
-            if ($exists) {
-                $path = Storage::disk('public')->path('set-previews/'.$block['handle'].'.webp');
-
-                $browsershot->select('main section')->save($path);
-
-                // Recreate the asset in Statamic
-                Asset::make()
-                    ->container('uploads')
-                    ->path('set-previews/'.$block['handle'].'.webp')
-                    ->save();
-            }
+            $this->info("- Processing group {$count} of {$total}");
+            Concurrency::run($tasks);
         });
     }
 
+    /**
+     * Assign block images to each of the sets
+     */
     private function assignImages()
     {
+        $this->info('Assigning images to all blocks');
+
         $fieldset = Fieldset::find('blocks');
         $contents = $fieldset->contents();
 
@@ -92,7 +103,5 @@ class Previews extends Command
 
         $fieldset->setContents($contents);
         $fieldset->save();
-
-        $this->info('Assigned all preview images to the blocks fieldset!');
     }
 }
