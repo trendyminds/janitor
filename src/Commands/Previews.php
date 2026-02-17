@@ -31,7 +31,9 @@ class Previews extends Command
     {
         // Check if storage/app/janitor/puppeteer exists. If not, prompt the user to run the install command.
         if (! Storage::disk('local')->exists('janitor/puppeteer')) {
-            throw new \Exception('Puppeteer is not installed. Have you ran "php artisan janitor:install" to install it?');
+            $this->error('Puppeteer is not installed. Have you ran "php artisan janitor:install" to install it?');
+
+            exit(1);
         }
     }
 
