@@ -15,12 +15,17 @@ class Block
             ->windowSize(1440, 900);
 
         // Check if the block exists on the page before trying to take a screenshot.
-        $exists = $browsershot->evaluate("document.querySelector('main section') !== null");
+        $exists = $browsershot
+            ->waitUntilNetworkIdle()
+            ->evaluate("document.querySelector('main section') !== null");
 
         if ($exists) {
             $path = Storage::disk('public')->path("set-previews/$block.webp");
 
-            $browsershot->select('main section')->save($path);
+            $browsershot
+                ->select('main section')
+                ->setScreenshotType('webp')
+                ->save($path);
 
             // Recreate the asset in Statamic
             Asset::make()
