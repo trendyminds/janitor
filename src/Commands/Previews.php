@@ -61,15 +61,17 @@ class Previews extends Command
     {
         $this->info('Generating block preview images');
 
-        new Blocks()->index()->chunk(8)->each(function ($chunk) {
-            $tasks = $chunk
-                ->map(function ($block) {
-                    $this->info("✔ {$block['name']}");
+        $blocks = (new Blocks)->index()->chunk(8);
+        $total = $blocks->count();
 
-                    return fn () => Block::screenshot($block['handle']);
-                })
-                ->all();
+        $blocks->each(function ($chunk, $i) use ($total) {
+            $count = $i + 1;
 
+            $tasks = $chunk->map(function ($block) {
+                return fn () => Block::screenshot($block['handle']);
+            })->all();
+
+            $this->info("- Processing group {$count} of {$total}");
             Concurrency::run($tasks);
         });
     }
