@@ -1,5 +1,6 @@
 {
     "name": "trendyminds/janitor",
+    "version": "1.0.0",
     "autoload": {
         "psr-4": {
             "Trendyminds\\Janitor\\": "src"
@@ -31,5 +32,8 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "require-dev": {
+        "laravel/pint": "^1.27"
+    }
 }
