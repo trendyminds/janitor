@@ -1,6 +1,12 @@
 {
     "name": "trendyminds/janitor",
-    "version": "1.0.1",
+    "description": "Make block organization and presentation a snap!",
+    "keywords": [
+        "statamic",
+        "blocks",
+        "dev"
+    ],
+    "version": "1.0.2",
     "license": "MIT",
     "autoload": {
         "psr-4": {
@@ -24,7 +30,7 @@
     "extra": {
         "statamic": {
             "name": "Janitor",
-            "description": "Janitor addon"
+            "description": "Make block organization and presentation a snap!"
         },
         "laravel": {
             "providers": [
