@@ -18,10 +18,10 @@ class Previews extends Command
 
     public function handle()
     {
-        $this->components->task('Running preflight', fn () => $this->preflight());
-        $this->components->task('Removing existing preview images', fn () => $this->clean());
-        $this->components->task('Creating new block preview images', fn () => $this->createScreenshots());
-        $this->components->task('Assign images to all blocks', fn () => $this->assignImages());
+        $this->preflight();
+        $this->clean();
+        $this->createScreenshots();
+        $this->assignImages();
     }
 
     /**
@@ -40,6 +40,8 @@ class Previews extends Command
      */
     private function clean()
     {
+        $this->info('Removing existing block preview images');
+
         // Delete all existing preview images in Statamic
         Asset::query()
             ->where('container', 'uploads')
@@ -57,9 +59,13 @@ class Previews extends Command
      */
     private function createScreenshots()
     {
+        $this->info('Generating block preview images');
+
         new Blocks()->index()->chunk(8)->each(function ($chunk) {
             $tasks = $chunk
                 ->map(function ($block) {
+                    $this->info("✔ {$block['name']}");
+
                     return fn () => Block::screenshot($block['handle']);
                 })
                 ->all();
@@ -73,6 +79,8 @@ class Previews extends Command
      */
     private function assignImages()
     {
+        $this->info('Assigning images to all blocks');
+
         $fieldset = Fieldset::find('blocks');
         $contents = $fieldset->contents();
 
