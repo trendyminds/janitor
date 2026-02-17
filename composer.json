@@ -1,0 +1,35 @@
+{
+    "name": "trendyminds/janitor",
+    "autoload": {
+        "psr-4": {
+            "Trendyminds\\Janitor\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Trendyminds\\Janitor\\Tests\\": "tests"
+        }
+    },
+    "require": {
+        "statamic/cms": "^6.0",
+        "spatie/browsershot": "^5.2"
+    },
+    "config": {
+        "allow-plugins": {
+            "pixelfear/composer-dist-plugin": true
+        }
+    },
+    "extra": {
+        "statamic": {
+            "name": "Janitor",
+            "description": "Janitor addon"
+        },
+        "laravel": {
+            "providers": [
+                "Trendyminds\\Janitor\\ServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
