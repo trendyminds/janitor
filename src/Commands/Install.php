@@ -36,7 +36,7 @@ class Install extends Command
         $packageJson = [
             'private' => true,
             'dependencies' => [
-                'puppeteer' => '^24.37.3',
+                'puppeteer' => '24.37.4',
             ],
         ];
 
