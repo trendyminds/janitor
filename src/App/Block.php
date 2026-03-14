@@ -15,9 +15,17 @@ class Block
         // Sanitize block name to just grab the handle (in case a full path is passed in)
         $block = basename($block);
 
+        // Custom CSS to pass to browsershot
+        $customCss = '
+            [\@keydown\.slash\.window="show = !show"] {
+                display: none !important;
+            }
+        ';
+
         $browsershot = Browsershot::url(config('app.url')."/dev/blocks?block=$block&per_page=1")
             ->setNodeModulePath(storage_path('app/janitor/puppeteer/node_modules'))
-            ->windowSize(1440, 900);
+            ->windowSize(1440, 900)
+            ->setOption('addStyleTag', json_encode(['content' => $customCss]));
 
         // Check if the block exists on the page before trying to take a screenshot.
         $exists = $browsershot

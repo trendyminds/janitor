@@ -4,7 +4,6 @@ namespace Trendyminds\Janitor\Commands;
 
 use App\Tags\Blocks;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\Storage;
 use Statamic\Facades\Asset;
 use Statamic\Facades\AssetContainer;
@@ -69,20 +68,6 @@ class Previews extends Command
             $this->info("- Creating screenshot: {$block['handle']}");
             Block::screenshot($block['handle']);
         });
-
-        // $blocks = (new Blocks)->index()->chunk(4);
-        // $total = $blocks->count();
-
-        // $blocks->each(function ($chunk, $i) use ($total) {
-        //     $count = $i + 1;
-
-        //     $tasks = $chunk->map(function ($block) {
-        //         return fn () => Block::screenshot($block['handle']);
-        //     })->all();
-
-        //     $this->info("- Processing group {$count} of {$total}");
-        //     Concurrency::run($tasks);
-        // });
     }
 
     /**
