@@ -5,6 +5,7 @@ namespace Trendyminds\Janitor\App;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Browsershot\Browsershot;
 use Statamic\Facades\Asset;
+use Statamic\Facades\AssetContainer;
 
 class Block
 {
@@ -20,7 +21,9 @@ class Block
             ->evaluate("document.querySelector('main section') !== null");
 
         if ($exists) {
-            $path = Storage::disk('public')->path("set-previews/$block.webp");
+            $container = AssetContainer::findByHandle('uploads');
+            $path = Storage::disk($container->disk)
+                ->path("_janitor/$block.webp");
 
             $browsershot
                 ->select('main section')
@@ -30,7 +33,7 @@ class Block
             // Recreate the asset in Statamic
             Asset::make()
                 ->container('uploads')
-                ->path("set-previews/$block.webp")
+                ->path("_janitor/$block.webp")
                 ->save();
         }
     }

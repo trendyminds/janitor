@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\Storage;
 use Statamic\Facades\Asset;
+use Statamic\Facades\AssetContainer;
 use Statamic\Facades\Fieldset;
 use Trendyminds\Janitor\App\Block;
 
@@ -47,13 +48,14 @@ class Previews extends Command
         // Delete all existing preview images in Statamic
         Asset::query()
             ->where('container', 'uploads')
-            ->where('folder', 'set-previews')
+            ->where('folder', '_janitor')
             ->get()
             ->each(fn ($asset) => $asset->delete());
 
-        // Delete the existing storage/app/public/set-previews directory and recreate it
-        Storage::disk('public')->deleteDirectory('set-previews');
-        Storage::disk('public')->makeDirectory('set-previews');
+        // Delete the existing _janitor directory in the main uploads container and recreate it
+        $container = AssetContainer::findByHandle('uploads');
+        Storage::disk($container->disk)->deleteDirectory('_janitor');
+        Storage::disk($container->disk)->makeDirectory('_janitor');
     }
 
     /**
@@ -63,19 +65,24 @@ class Previews extends Command
     {
         $this->info('Generating block preview images');
 
-        $blocks = (new Blocks)->index()->chunk(8);
-        $total = $blocks->count();
-
-        $blocks->each(function ($chunk, $i) use ($total) {
-            $count = $i + 1;
-
-            $tasks = $chunk->map(function ($block) {
-                return fn () => Block::screenshot($block['handle']);
-            })->all();
-
-            $this->info("- Processing group {$count} of {$total}");
-            Concurrency::run($tasks);
+        (new Blocks)->index()->each(function ($block) {
+            $this->info("- Creating screenshot: {$block['handle']}");
+            Block::screenshot($block['handle']);
         });
+
+        // $blocks = (new Blocks)->index()->chunk(4);
+        // $total = $blocks->count();
+
+        // $blocks->each(function ($chunk, $i) use ($total) {
+        //     $count = $i + 1;
+
+        //     $tasks = $chunk->map(function ($block) {
+        //         return fn () => Block::screenshot($block['handle']);
+        //     })->all();
+
+        //     $this->info("- Processing group {$count} of {$total}");
+        //     Concurrency::run($tasks);
+        // });
     }
 
     /**
@@ -92,7 +99,7 @@ class Previews extends Command
             foreach ($group['sets'] as $handle => &$set) {
                 $asset = Asset::query()
                     ->where('container', 'uploads')
-                    ->where('path', 'set-previews/'.$handle.'.webp')
+                    ->where('path', '_janitor/'.$handle.'.webp')
                     ->first();
 
                 if ($asset) {
