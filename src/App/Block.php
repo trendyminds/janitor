@@ -2,6 +2,7 @@
 
 namespace Trendyminds\Janitor\App;
 
+use Illuminate\Http\File;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Browsershot\Browsershot;
 use Statamic\Facades\Asset;
@@ -25,13 +26,21 @@ class Block
 
         if ($exists) {
             $container = AssetContainer::findByHandle('uploads');
-            $path = Storage::disk($container->disk)
-                ->path("_janitor/$block.webp");
+
+            // Save the screenshot to a temporary file first, then move it to the correct location in storage.
+            $tempPath = tempnam(sys_get_temp_dir(), 'janitor_').'.webp';
 
             $browsershot
                 ->select('main section')
                 ->setScreenshotType('webp')
-                ->save($path);
+                ->save($tempPath);
+
+            // Move the file to the correct location in storage
+            Storage::disk($container->disk)
+                ->putFileAs('_janitor', new File($tempPath), "$block.webp");
+
+            // Delete the temporary file
+            unlink($tempPath);
 
             // Recreate the asset in Statamic
             Asset::make()
