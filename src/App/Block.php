@@ -11,6 +11,9 @@ class Block
 {
     public static function screenshot(string $block)
     {
+        // Sanitize block name to just grab the handle (in case a full path is passed in)
+        $block = basename($block);
+
         $browsershot = Browsershot::url(config('app.url')."/dev/blocks?block=$block&per_page=1")
             ->setNodeModulePath(storage_path('app/janitor/puppeteer/node_modules'))
             ->windowSize(1440, 900);
