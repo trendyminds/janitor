@@ -24,6 +24,7 @@ class Block
 
         $browsershot = Browsershot::url(config('app.url')."/dev/blocks?block=$block&per_page=1")
             ->setNodeModulePath(storage_path('app/janitor/puppeteer/node_modules'))
+            ->setNodeEnv(['PUPPETEER_CACHE_DIR' => storage_path('app/janitor/puppeteer/.cache')])
             ->windowSize(1440, 900)
             ->setOption('addStyleTag', json_encode(['content' => $customCss]));
 
