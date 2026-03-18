@@ -45,8 +45,11 @@ class Block
                 ->save($tempPath);
 
             // Move the file to the correct location in storage
+            $timestamp = now()->format('Y-m-d_Hi');
+            $filename = "{$block}_{$timestamp}.webp";
+
             Storage::disk($container->disk)
-                ->putFileAs('_janitor', new File($tempPath), "$block.webp");
+                ->putFileAs('_janitor', new File($tempPath), $filename);
 
             // Delete the temporary file
             unlink($tempPath);
@@ -54,7 +57,7 @@ class Block
             // Recreate the asset in Statamic
             Asset::make()
                 ->container('uploads')
-                ->path("_janitor/$block.webp")
+                ->path("_janitor/$filename")
                 ->save();
         }
     }

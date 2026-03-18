@@ -87,18 +87,23 @@ class Previews extends Command
     {
         $this->info('Assigning images to all blocks');
 
+        $container = AssetContainer::findByHandle('uploads');
+        $files = collect(Storage::disk($container->disk)->files('_janitor'));
+
         $fieldset = Fieldset::find('blocks');
         $contents = $fieldset->contents();
 
         foreach ($contents['fields'][0]['field']['sets'] as &$group) {
             foreach ($group['sets'] as $handle => &$set) {
-                $asset = Asset::query()
-                    ->where('container', 'uploads')
-                    ->where('path', '_janitor/'.$handle.'.webp')
-                    ->first();
+                $match = $files->first(fn ($path) => preg_match(
+                    '/^'.preg_quote($handle, '/').'_\d{4}-\d{2}-\d{2}_\d{4}\.webp$/',
+                    basename($path)
+                ));
 
-                if ($asset) {
-                    $set['image'] = $asset->basename();
+                if ($match) {
+                    $set['image'] = basename($match);
+                } else {
+                    unset($set['image']);
                 }
             }
         }
