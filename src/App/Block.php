@@ -33,32 +33,45 @@ class Block
             ->waitUntilNetworkIdle()
             ->evaluate("document.querySelector('main section') !== null");
 
-        if ($exists) {
-            $container = AssetContainer::findByHandle('uploads');
-
-            // Save the screenshot to a temporary file first, then move it to the correct location in storage.
-            $tempPath = tempnam(sys_get_temp_dir(), 'janitor_').'.webp';
-
-            $browsershot
-                ->select('main section')
-                ->setScreenshotType('webp')
-                ->save($tempPath);
-
-            // Move the file to the correct location in storage
-            $timestamp = now()->format('Y-m-d_Hi');
-            $filename = "{$block}_{$timestamp}.webp";
-
-            Storage::disk($container->disk)
-                ->putFileAs('_janitor', new File($tempPath), $filename);
-
-            // Delete the temporary file
-            unlink($tempPath);
-
-            // Recreate the asset in Statamic
-            Asset::make()
-                ->container('uploads')
-                ->path("_janitor/$filename")
-                ->save();
+        if (! $exists) {
+            return;
         }
+
+        // Make sure the block is at least 10 pixels tall. We don't want to save screenshots of empty blocks.
+        $isTallEnough = $browsershot
+            ->waitUntilNetworkIdle()
+            ->evaluate(
+                "document.querySelector('main section').getBoundingClientRect().height >= 10"
+            );
+
+        if (! $isTallEnough) {
+            return;
+        }
+
+        $container = AssetContainer::findByHandle('uploads');
+
+        // Save the screenshot to a temporary file first, then move it to the correct location in storage.
+        $tempPath = tempnam(sys_get_temp_dir(), 'janitor_').'.webp';
+
+        $browsershot
+            ->select('main section')
+            ->setScreenshotType('webp')
+            ->save($tempPath);
+
+        // Move the file to the correct location in storage
+        $timestamp = now()->format('Y-m-d_Hi');
+        $filename = "{$block}_{$timestamp}.webp";
+
+        Storage::disk($container->disk)
+            ->putFileAs('_janitor', new File($tempPath), $filename);
+
+        // Delete the temporary file
+        unlink($tempPath);
+
+        // Recreate the asset in Statamic
+        Asset::make()
+            ->container('uploads')
+            ->path("_janitor/$filename")
+            ->save();
     }
 }
