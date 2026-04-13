@@ -8,10 +8,21 @@ Make block organization and presentation a snap!
 ## Installing
 1. Run `composer require trendyminds/janitor --dev`
 2. Install Puppeteer by running `php artisan janitor:install`
+3. Ensure your sets are configured to use the preview folder in `config/statamic/assets.php`:
+```php
+  /*
+  |--------------------------------------------------------------------------
+  | Replicator and Bard Set Preview Images
+  |--------------------------------------------------------------------------
+  |
+  | Replicator and Bard sets may have preview images to give users a visual
+  | representation of the content within. Here you may specify the asset
+  | container and folder where these preview images are to be stored.
+  |
+  */
 
-## Notes
-
-Before running the preview command locally, ensure the following steps have been taken to prevent issues:
-1. You've added the proper configuration to `config/statamic/assets.php` available [here](https://github.com/trendyminds/statamic-starter/blob/main/config/statamic/assets.php#L227-L241)
-2. You update the search index via `php please search:update --all`
-3. You run `npm run dev` to ensure vite is running
+  'set_preview_images' => [
+      'container' => 'uploads',
+      'folder' => '_janitor',
+  ],
+```

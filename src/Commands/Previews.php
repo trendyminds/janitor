@@ -5,6 +5,7 @@ namespace Trendyminds\Janitor\Commands;
 use App\Tags\Blocks;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Concurrency;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Statamic\Facades\Asset;
 use Statamic\Facades\AssetContainer;
@@ -36,6 +37,14 @@ class Previews extends Command
 
             exit(1);
         }
+
+        // Run `npm run build` to ensure the latest version of the preview generation script is built before running previews
+        $this->info('Running `npm run build`');
+        Process::run('npm run build')->throw();
+
+        // Run `php artisan statamic:search:update --all` to ensure all blocks are indexed and available for preview generation
+        $this->info('Updating Statamic blocks index for preview generation...');
+        $this->callSilent('statamic:search:update', ['--all' => true]);
     }
 
     /**
